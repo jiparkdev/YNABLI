@@ -186,9 +186,9 @@ function formatPayee(payee, msg) {
   // Remove any multiple spaces between words in the payee.
   // Append a time tag to the end of the payee name.
   var timetag = createTimeTag(msg.getDate());
-  var trimmed_payee1 = payee.trim();
-  var trimmed_payee2 = trimmed_payee1.replace(/\s{2,}/ig, " ");
-  return trimmed_payee2 + " " + timetag;
+  var trimmedPayee1 = payee.trim();
+  var trimmedPayee2 = trimmedPayee1.replace(/\s{2,}/ig, " ");
+  return trimmedPayee2 + " " + timetag;
 }
 
 function createPayload(date, payee, amount, memo) {
