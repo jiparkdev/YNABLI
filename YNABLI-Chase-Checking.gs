@@ -181,6 +181,16 @@ function formatAmount(amount, flow) {
   return retAmount;
 }
 
+function formatPayee(payee, msg) {
+  // Remove leading and trailing spaces from the payee.
+  // Remove any multiple spaces between words in the payee.
+  // Append a time tag to the end of the payee name.
+  var timetag = createTimeTag(msg.getDate());
+  var trimmed_payee1 = payee.trim();
+  var trimmed_payee2 = trimmed_payee1.replace(/\s{2,}/ig, " ");
+  return trimmed_payee2 + " " + timetag;
+}
+
 function createPayload(date, payee, amount, memo) {
   // Create a transaction payload that will be POSTed to YNAB.
   var payload = {
@@ -221,10 +231,9 @@ function isCorrectBankAccount(msg) {
 
 function debitOutflow(msg) {
   var curDate = datetimeToISO(msg.getDate());
-  var dtt = createTimeTag(msg.getDate());
   var msgBody = msg.getPlainBody();
   var res = msgBody.match(/You made a debit card transaction of \$(.*) with (.*)/i);
-  var curPayee = res[2] + " " + dtt;
+  var curPayee = formatPayee(res[2], msg);
   var curAmount = formatAmount(res[1], "outflow");
   var payload = createPayload(curDate, curPayee, curAmount, "");
   if (!entryExists([curPayee], curAmount, curDate)) {
@@ -234,10 +243,9 @@ function debitOutflow(msg) {
 
 function externalTransferOutflow(msg) {
   var curDate = datetimeToISO(msg.getDate());
-  var dtt = createTimeTag(msg.getDate());
   var msgBody = msg.getPlainBody();
   var res = msgBody.match(/You sent \$(.*) to (.*)/i);
-  var curPayee = res[2] + " " + dtt;
+  var curPayee = formatPayee(res[2], msg);
   var curAmount = formatAmount(res[1], "outflow");
   var payload = createPayload(curDate, curPayee, curAmount, "");
   if (!entryExists([curPayee], curAmount, curDate)) {
@@ -247,8 +255,7 @@ function externalTransferOutflow(msg) {
 
 function directDepositInflow(msg) {
   var curDate = datetimeToISO(msg.getDate());
-  var dtt = createTimeTag(msg.getDate());
-  var curPayee = "Direct Deposit " + dtt;
+  var curPayee = formatPayee("Direct Deposit", msg);
   var msgBody = msg.getPlainBody();
   var msgArr = msgBody.split("\n");
   for (var i = 0; i < msgArr.length; i++) {
@@ -266,10 +273,9 @@ function directDepositInflow(msg) {
 
 function quickpayInflow(msg) {
   var curDate = datetimeToISO(msg.getDate());
-  var dtt = createTimeTag(msg.getDate());
   var msgBody = msg.getPlainBody();
   var resPayee = msgBody.match(/(.*)\ssent you.*QuickPay/);
-  var curPayee = "QuickPay from " + resPayee[1] + " " + dtt;
+  var curPayee = formatPayee("QuickPay from" + " " + resPayee[1], msg);
   var resAmount = msgBody.match(/Amount:\*\s\$(.*).*\s\(/);
   var curAmount = formatAmount(resAmount[1], "inflow");
   var curMemo = "";
@@ -289,8 +295,7 @@ function quickpayInflow(msg) {
 
 function quickDepositInflow(msg) {
   var curDate = datetimeToISO(msg.getDate());
-  var dtt = createTimeTag(msg.getDate());
-  var curPayee = "Quick Deposit " + dtt;
+  var curPayee = formatPayee("Quick Deposit", msg);
   var msgBody = msg.getPlainBody();
   var msgArr = msgBody.split("\n");
   for (var i = 0; i < msgArr.length; i++) {
@@ -308,11 +313,10 @@ function quickDepositInflow(msg) {
 
 function atmDepositAlertInflow(msg) {
   var curDate = datetimeToISO(msg.getDate());
-  var dtt = createTimeTag(msg.getDate());
   var msgBody = msg.getPlainBody();
   var res = msgBody.match(/\$(.*)\sATM deposit.*on\s(.*)\./i);
   var curAmount = formatAmount(res[1], "inflow");
-  var curPayee = "ATM Deposit " + dtt;
+  var curPayee = formatPayee("ATM Deposit", msg);
   var payload = createPayload(curDate, curPayee, curAmount, "");
   if (!entryExists([curPayee], curAmount, curDate)) {
     addTransaction(payload);
@@ -321,8 +325,7 @@ function atmDepositAlertInflow(msg) {
 
 function atmDepositReceiptInflow(msg) {
   var curDate = datetimeToISO(msg.getDate());
-  var dtt = createTimeTag(msg.getDate());
-  var curPayee = "ATM Deposit " + dtt;
+  var curPayee = formatPayee("ATM Deposit", msg);
   var msgBody = msg.getPlainBody();
   var msgArr = msgBody.split("\n");
   for (var i = 0; i < msgArr.length; i++) {
@@ -340,8 +343,7 @@ function atmDepositReceiptInflow(msg) {
 
 function atmWithdrawalAlertOutflow(msg) {
   var curDate = datetimeToISO(msg.getDate());
-  var dtt = createTimeTag(msg.getDate());
-  var curPayee = "ATM Withdrawal " + dtt;
+  var curPayee = formatPayee("ATM Withdrawal", msg);
   var msgBody = msg.getPlainBody();
   var msgArr = msgBody.split("\n");
   for (var i = 0; i < msgArr.length; i++) {
@@ -359,8 +361,7 @@ function atmWithdrawalAlertOutflow(msg) {
 
 function wireIncomingInflow(msg) {
   var curDate = datetimeToISO(msg.getDate());
-  var dtt = createTimeTag(msg.getDate());
-  var curPayee = "Wire transfer " + dtt;
+  var curPayee = formatPayee("Wire transfer", msg);
   var msgBody = msg.getPlainBody();
   var msgArr = msgBody.split("\n");
   for (var i = 0; i < msgArr.length; i++) {
@@ -378,8 +379,7 @@ function wireIncomingInflow(msg) {
 
 function wireOutgoingOutflow(msg) {
   var curDate = datetimeToISO(msg.getDate());
-  var dtt = createTimeTag(msg.getDate());
-  var curPayee = "Wire transfer " + dtt;
+  var curPayee = formatPayee("Wire transfer", msg);
   var msgBody = msg.getPlainBody();
   var msgArr = msgBody.split("\n");
   for (var i = 0; i < msgArr.length; i++) {
